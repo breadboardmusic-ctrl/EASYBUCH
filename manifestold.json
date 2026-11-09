@@ -1,9 +1,0 @@
-{
-  "name": "RetroSynth-80 Workstation",
-  "short_name": "RetroSynth",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#06040a",
-  "theme_color": "#ff007f",
-  "icons": []
-}
