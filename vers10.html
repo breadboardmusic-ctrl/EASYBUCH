@@ -1,0 +1,2180 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroSynth-80 Hardware Workstation</title>
+    <style>
+        :root {
+            --bg-color: #06040a;
+            --chassis-bg: linear-gradient(180deg, #1f182c 0%, #120d1c 100%);
+            --panel-bg: #150f24;
+            --panel-border: #3b275c;
+            --wood-endcap: linear-gradient(180deg, #5c2c16 0%, #2b1207 100%);
+            --neon-pink: #ff007f;
+            --neon-cyan: #00f3ff;
+            --neon-amber: #ffb700;
+            --neon-green: #39ff14;
+            --neon-red: #ff3333;
+            --text-main: #e2e8f0;
+            --lcd-bg: #030d10;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 50% 30%, rgba(0, 243, 255, 0.05) 0%, transparent 60%),
+                linear-gradient(rgba(255, 0, 127, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 0, 127, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 10px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
+            letter-spacing: 3px;
+            font-weight: 900;
+        }
+
+        p.subtitle {
+            font-size: 0.72rem;
+            color: var(--neon-pink);
+            letter-spacing: 2px;
+            margin-top: 2px;
+        }
+
+        /* Navigazione Tab con stile "Pulsanti Hardware Illuminati" */
+        .tab-bar {
+            display: flex;
+            width: 100%;
+            max-width: 960px;
+            gap: 6px;
+            margin-bottom: 12px;
+            background: #090611;
+            padding: 6px;
+            border-radius: 8px;
+            border: 2px solid #23163a;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 4px;
+            background: #150e24;
+            border: 1px solid #3b265c;
+            border-radius: 6px;
+            color: #94a3b8;
+            font-weight: 800;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn:hover {
+            color: var(--neon-cyan);
+            border-color: rgba(0, 243, 255, 0.5);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(180deg, #2a1440 0%, #150b26 100%);
+            color: #fff;
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 12px rgba(255, 0, 127, 0.4), inset 0 0 8px rgba(255, 0, 127, 0.3);
+            text-shadow: 0 0 6px var(--neon-pink);
+        }
+
+        /* Chassi Esterno Sintetizzatore Hardware con Fianchetti in Legno */
+        .synth-chassis {
+            width: 100%;
+            max-width: 960px;
+            background: var(--chassis-bg);
+            border: 3px solid #3b255c;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .synth-chassis::before, .synth-chassis::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            bottom: -3px;
+            width: 14px;
+            background: var(--wood-endcap);
+            border: 2px solid #1a0a03;
+        }
+
+        .synth-chassis::before { left: -14px; border-radius: 8px 0 0 8px; }
+        .synth-chassis::after { right: -14px; border-radius: 0 8px 8px 0; }
+
+        .tab-page {
+            display: none;
+            gap: 14px;
+        }
+
+        .tab-page.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Layout Grid Orizzontale per la vista "Sintetizzatore Vero" */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .module {
+            background: var(--panel-bg);
+            border: 2px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .module-title {
+            font-size: 0.75rem;
+            color: var(--neon-amber);
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 183, 0, 0.2);
+            padding-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+        }
+
+        .lcd-text {
+            color: var(--neon-cyan);
+            font-size: 0.85rem;
+            font-weight: bold;
+            float: right;
+        }
+
+        input[type="range"] {
+            accent-color: var(--neon-pink);
+            width: 100%;
+            cursor: pointer;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            background: #090611;
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 4px;
+            padding: 5px;
+            font-size: 0.75rem;
+            outline: none;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            accent-color: var(--neon-pink);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 0.75rem;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        .mod-row {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px 6px;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+
+        .mod-row label {
+            color: var(--neon-cyan);
+            font-size: 0.65rem;
+        }
+
+        .btn {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: 900;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-play {
+            background: #10b981;
+            color: #000;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        .btn-play.playing {
+            background: var(--neon-pink);
+            color: #fff;
+            box-shadow: 0 0 15px var(--neon-pink);
+        }
+
+        .btn-rec {
+            background: #475569;
+            color: #fff;
+        }
+
+        .btn-rec.recording {
+            background: var(--neon-red);
+            box-shadow: 0 0 15px var(--neon-red);
+            animation: pulse-red 1s infinite alternate;
+        }
+
+        .btn-strike {
+            background: var(--neon-amber);
+            color: #000;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.7rem;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(255, 183, 0, 0.4);
+        }
+        .btn-strike:active {
+            background: #fff;
+            box-shadow: 0 0 12px #fff;
+        }
+
+        .led-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #331020;
+            border-radius: 50%;
+            box-shadow: inset 0 0 2px #000;
+            margin-left: 6px;
+            vertical-align: middle;
+            transition: background-color 0.1s, box-shadow 0.1s;
+        }
+        .led-indicator.lit {
+            background-color: var(--neon-pink);
+            box-shadow: 0 0 6px var(--neon-pink), 0 0 10px var(--neon-pink);
+        }
+
+        @keyframes pulse-red {
+            from { opacity: 1; }
+            to { opacity: 0.6; }
+        }
+
+        .btn-action {
+            background: var(--panel-border);
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+        }
+
+        .step-grid-container {
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            margin-top: 10px;
+        }
+
+        .step-grid {
+            display: grid;
+            grid-template-columns: repeat(32, minmax(42px, 1fr));
+            gap: 5px;
+            width: max-content;
+            min-width: 100%;
+        }
+
+        .step-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            background: rgba(9, 6, 17, 0.7);
+            padding: 6px 2px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            width: 44px;
+        }
+
+        .step-col.hidden {
+            display: none !important;
+        }
+
+        .step-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 4px;
+            background: #1a102f;
+            border: 2px solid var(--neon-pink);
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .step-btn.active {
+            background: var(--neon-pink);
+            box-shadow: 0 0 10px var(--neon-pink);
+        }
+
+        .step-btn.current {
+            border-color: var(--neon-green) !important;
+            box-shadow: 0 0 12px var(--neon-green) !important;
+            transform: scale(1.05);
+        }
+
+        .pitch-container {
+            height: 110px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .vertical-slider {
+            -webkit-appearance: slider-vertical;
+            writing-mode: bt-lr;
+            width: 14px;
+            height: 95px;
+            accent-color: var(--neon-cyan);
+            cursor: pointer;
+        }
+
+        .lcd-display {
+            background: var(--lcd-bg);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 4px;
+            width: 100%;
+            padding: 2px 1px;
+            text-align: center;
+            box-shadow: inset 0 0 5px rgba(0, 243, 255, 0.2);
+        }
+
+        .pitch-val {
+            font-size: 0.55rem;
+            color: var(--neon-cyan);
+            font-weight: bold;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Tastiera Capacitiva Buchla Stile Retro Integrata */
+        .buchla-keyboard {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            background: #090611;
+            padding: 12px 6px;
+            border-radius: 8px;
+            border: 2px solid var(--neon-amber);
+            box-shadow: inset 0 0 15px rgba(255, 183, 0, 0.15);
+        }
+
+        .buchla-key {
+            flex: 1;
+            height: 130px;
+            background: linear-gradient(180deg, #1c152b 0%, #0d0818 100%);
+            border: 2px solid var(--neon-amber);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 2px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.1s ease;
+            box-shadow: inset 0 0 5px rgba(255, 183, 0, 0.2);
+        }
+
+        .buchla-key::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            width: 80%;
+            height: 40%;
+            background: repeating-linear-gradient(
+                0deg,
+                var(--neon-amber),
+                var(--neon-amber) 2px,
+                transparent 2px,
+                transparent 5px
+            );
+            opacity: 0.4;
+            border-radius: 2px;
+            pointer-events: none;
+        }
+
+        .buchla-key.is-black-note {
+            background: linear-gradient(180deg, #090512 0%, #040208 100%);
+            border-color: var(--neon-pink);
+        }
+
+        .buchla-key.is-black-note::before {
+            background: repeating-linear-gradient(
+                0deg,
+                var(--neon-pink),
+                var(--neon-pink) 2px,
+                transparent 2px,
+                transparent 5px
+            );
+        }
+
+        .buchla-key.active-root {
+            border-color: var(--neon-cyan) !important;
+            box-shadow: 0 0 15px var(--neon-cyan), inset 0 0 12px var(--neon-cyan) !important;
+            transform: translateY(-2px);
+        }
+
+        .buchla-key.pressed {
+            background: var(--neon-amber);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-amber);
+        }
+
+        .buchla-key.is-black-note.pressed {
+            background: var(--neon-pink);
+            color: #fff;
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        .key-label {
+            font-size: 0.75rem;
+            font-weight: 900;
+            color: var(--neon-amber);
+            z-index: 2;
+        }
+
+        .buchla-key.is-black-note .key-label {
+            color: var(--neon-pink);
+        }
+
+        .buchla-key.pressed .key-label {
+            color: #000;
+        }
+
+        .key-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            margin-bottom: 4px;
+        }
+
+        .buchla-key.active-root .key-indicator {
+            background: var(--neon-cyan);
+            box-shadow: 0 0 8px var(--neon-cyan);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>RetroSynth-80 Workstation</h1>
+        <p class="subtitle">Silent Buchla Root Transposer & Pro Hardware Layout</p>
+    </header>
+
+    <!-- Navigation Tabs Bar (Pulsanti Sezioni Hardware) -->
+    <div class="tab-bar">
+        <button class="tab-btn active" data-tab="tab-osc-env">1. Synth & Envelope Engine</button>
+        <button class="tab-btn" data-tab="tab-seq-pulser">2. Sequencer & Pulser</button>
+        <button class="tab-btn" data-tab="tab-touch">3. Silent Touch Transposer</button>
+        <button class="tab-btn" data-tab="tab-fx">4. Tape & FX Master</button>
+    </div>
+
+    <div class="synth-chassis">
+        <!-- Global Master Header Panel (Sempre Visibile) -->
+        <div class="module" style="margin-bottom: 14px;">
+            <div class="module-title">
+                <span>System & Master Presets</span>
+                <button id="rec-btn" class="btn btn-rec">● REC WAV (48k/32b)</button>
+            </div>
+            <div class="controls-grid" style="margin-bottom: 0;">
+                <div class="control-group">
+                    <label for="preset-select">Seleziona Preset</label>
+                    <select id="preset-select">
+                        <option value="init" selected>00. Init (Inizializzazione)</option>
+                        <option value="default">01. Default Ambient</option>
+                        <option value="westcoast">02. West-Coast Wavefold</option>
+                        <option value="sub_sh">03. Deep Sub S&H</option>
+                        <option value="cassette_warm">04. Lo-Fi Tape Warmth</option>
+                    </select>
+                </div>
+                <div class="control-group" style="justify-content: flex-end;">
+                    <div style="display: flex; gap: 4px; margin-top: 14px;">
+                        <button id="save-preset-btn" class="btn btn-action" style="flex:1;">SALVA</button>
+                        <button id="delete-preset-btn" class="btn btn-action" style="background:#ef4444; color:#fff; border:none;">ELIMINA</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 1: SINTETIZZATORE E INVILUPPO (Layout a 2 Colonne Pro Synth) -->
+        <div id="tab-osc-env" class="tab-page active">
+            <div class="grid-2col">
+                <!-- Colonna Sinistra: Oscillatore e FM -->
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                    <div class="module">
+                        <div class="module-title">01. Scale & Tuning</div>
+                        <div class="controls-grid">
+                            <div class="control-group">
+                                <label for="scale-select">Scala Tonale</label>
+                                <select id="scale-select">
+                                    <option value="pentatonic" selected>Pentatonica Minore</option>
+                                    <option value="major">Scala Maggiore</option>
+                                    <option value="minor">Scala Minore Naturale</option>
+                                    <option value="dorian">Modo Dorico</option>
+                                    <option value="chromatic">Cromatica</option>
+                                </select>
+                            </div>
+                            <div class="control-group" style="justify-content: flex-end;">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="free-pitch">
+                                    <label for="free-pitch"><strong>Pitch Libero (20Hz-3000Hz)</strong></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mod-row">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="mod-pitch-enabled">
+                                <label for="mod-pitch-enabled">Mod. S&H Pitch</label>
+                            </div>
+                            <div class="control-group">
+                                <input type="range" id="mod-pitch-depth" min="0" max="100" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="module">
+                        <div class="module-title">02. Sound Architecture & FM</div>
+                        <div class="controls-grid">
+                            <div class="control-group">
+                                <label for="waveform">Oscillatore Portante</label>
+                                <select id="waveform">
+                                    <option value="sawtooth">Sawtooth (Dente di Sega)</option>
+                                    <option value="sine" selected>Sine (Pura)</option>
+                                    <option value="square">Square</option>
+                                    <option value="triangle">Triangle</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="wavefold-drive">Wavefolder Drive <span id="fold-val" class="lcd-text">1.0x</span></label>
+                                <input type="range" id="wavefold-drive" min="1.0" max="10.0" step="0.1" value="1.0">
+                            </div>
+                        </div>
+
+                        <div class="controls-grid">
+                            <div class="control-group">
+                                <label for="fm-depth">FM Depth <span id="fm-depth-val" class="lcd-text">0</span></label>
+                                <input type="range" id="fm-depth" min="0" max="1000" value="0">
+                            </div>
+                            <div class="control-group">
+                                <label id="fm-param-label" for="fm-ratio">FM Ratio <span id="fm-param-val" class="lcd-text">1.0x</span></label>
+                                <input type="range" id="fm-ratio" min="0.25" max="8.0" step="0.25" value="1.0">
+                            </div>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="fm-free-mode">
+                            <label for="fm-free-mode">FM Ratio Libero (in Hz)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colonna Destra: Inviluppo ADSR & Filtro LPG -->
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                    <div class="module" style="height: 100%;">
+                        <div class="module-title">
+                            <span>03. Clean LPG & ADSR Envelope</span>
+                            <button id="strike-btn" class="btn-strike">● STRIKE</button>
+                        </div>
+                        <div class="controls-grid">
+                            <div class="control-group">
+                                <label for="env-attack">Attack <span id="env-attack-val" class="lcd-text">15 ms</span></label>
+                                <input type="range" id="env-attack" min="2" max="1000" value="15">
+                            </div>
+                            <div class="control-group">
+                                <label for="env-decay">Decay <span id="env-decay-val" class="lcd-text">200 ms</span></label>
+                                <input type="range" id="env-decay" min="10" max="2000" value="200">
+                            </div>
+                        </div>
+                        <div class="mod-row">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="mod-decay-enabled">
+                                <label for="mod-decay-enabled">Mod. S&H Decay</label>
+                            </div>
+                            <div class="control-group">
+                                <input type="range" id="mod-decay-depth" min="0" max="100" value="0">
+                            </div>
+                        </div>
+
+                        <div class="controls-grid" style="margin-top: 12px;">
+                            <div class="control-group">
+                                <label for="env-sustain">Sustain <span id="env-sustain-val" class="lcd-text">40%</span></label>
+                                <input type="range" id="env-sustain" min="0" max="100" value="40">
+                            </div>
+                            <div class="control-group">
+                                <label for="env-release">Release <span id="env-release-val" class="lcd-text">300 ms</span></label>
+                                <input type="range" id="env-release" min="10" max="3000" value="300">
+                            </div>
+                        </div>
+
+                        <div class="controls-grid" style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; margin-top: 10px;">
+                            <div class="control-group">
+                                <label for="lpg-cutoff">Filtro Base Cutoff <span id="lpg-cutoff-val" class="lcd-text">80 Hz</span></label>
+                                <input type="range" id="lpg-cutoff" min="20" max="1000" value="80">
+                            </div>
+                            <div class="control-group">
+                                <label for="lpg-env-amount">ADSR Mod. Int. <span id="lpg-env-amount-val" class="lcd-text">4000 Hz</span></label>
+                                <input type="range" id="lpg-env-amount" min="100" max="10000" step="100" value="4000">
+                            </div>
+                        </div>
+
+                        <div class="mod-row">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="mod-cutoff-enabled">
+                                <label for="mod-cutoff-enabled">Mod. S&H Cut-off</label>
+                            </div>
+                            <div class="control-group">
+                                <input type="range" id="mod-cutoff-depth" min="0" max="100" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: SEQUENCER E PULSER -->
+        <div id="tab-seq-pulser" class="tab-page">
+            <!-- Buchla Pulser Module -->
+            <div class="module">
+                <div class="module-title">
+                    <span>
+                        Buchla Pulser <span id="pulser-led" class="led-indicator"></span>
+                    </span>
+                    <button id="pulser-strike-btn" class="btn-strike">● PULSE</button>
+                </div>
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label for="pulser-rate">Pulser Rate <span id="pulser-rate-val" class="lcd-text">2.0 Hz</span></label>
+                        <input type="range" id="pulser-rate" min="0.1" max="20.0" step="0.1" value="2.0">
+                    </div>
+                    <div class="control-group" style="justify-content: flex-end;">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="pulser-cycle" checked>
+                            <label for="pulser-cycle"><strong>Modalità Cycle (Loop)</strong></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mod-row">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="mod-pulser-cutoff">
+                        <label for="mod-pulser-cutoff">Mod. Pulser su Cutoff</label>
+                    </div>
+                    <div class="control-group">
+                        <input type="range" id="pulser-depth" min="0" max="100" value="20">
+                    </div>
+                </div>
+                <div class="mod-row" style="border-top: 1px dashed rgba(255,255,255,0.1); margin-top: 6px; padding-top: 6px;">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="pulser-trig-env">
+                        <label for="pulser-trig-env"><strong>Pulser Trigger Inviluppo</strong></label>
+                    </div>
+                    <div class="control-group">
+                        <label for="pulser-trig-amt" style="font-size:0.65rem;">Intensità Trigger <span id="pulser-trig-amt-val" class="lcd-text">50%</span></label>
+                        <input type="range" id="pulser-trig-amt" min="0" max="100" value="50">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sequencer Engine Module -->
+            <div class="module">
+                <div class="module-title">
+                    <span>Sequencer Engine</span>
+                    <div>
+                        <span style="font-size: 0.7rem; color: #94a3b8; margin-right: 6px;">BPM: <span id="bpm-val" class="lcd-text" style="float:none;">120</span></span>
+                        <button id="play-btn" class="btn-play">PLAY</button>
+                    </div>
+                </div>
+
+                <div class="controls-grid" style="margin-bottom: 8px;">
+                    <div class="control-group">
+                        <label for="seq-length">Lunghezza Sequenza</label>
+                        <select id="seq-length">
+                            <option value="2">2 Step</option>
+                            <option value="3">3 Step</option>
+                            <option value="4">4 Step</option>
+                            <option value="5" selected>5 Step</option>
+                            <option value="8">8 Step</option>
+                            <option value="16">16 Step</option>
+                            <option value="32">32 Step</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="bpm">Velocità BPM</label>
+                        <input type="range" id="bpm" min="40" max="240" value="120">
+                    </div>
+                </div>
+
+                <div class="step-grid-container">
+                    <div class="step-grid" id="step-grid-root"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: TASTIERA CAPACITIVA SILENZIOSA (TRANSPOSER) -->
+        <div id="tab-touch" class="tab-page">
+            <div class="module">
+                <div class="module-title">
+                    <span>Buchla Silent Touch Controller & Transposer</span>
+                    <span id="current-root-display" class="lcd-text">Root: C (0 ST)</span>
+                </div>
+                <p style="font-size: 0.72rem; color: #94a3b8; margin-bottom: 12px; line-height: 1.4;">
+                    <strong>Modalità Silenziosa:</strong> Toccando le piazzole in rame non verrà emesso alcun suono immediato. La nota selezionata trasporrà istantaneamente la tonalità di base del sequencer durante la riproduzione.
+                </p>
+
+                <!-- Touch Keyboard Grid -->
+                <div class="buchla-keyboard" id="buchla-keyboard">
+                    <div class="buchla-key" data-note="C" data-semitones="0">
+                        <div class="key-indicator"></div>
+                        <span class="key-label">C</span>
+                    </div>
+                    <div class="buchla-key is-black-note" data-note="C#" data-semitones="1">
+                        <div class="key-indicator"></div>
+                        <span class="key-label">C#</span>
+                    </div>
+                    <div class="buchla-key" data-note="D" data-semitones="2">
+                        <div class="key-indicator"></div>
+                        <span class="key-label">D</span>
+                    </div>
+                    <div class="buchla-key is-black-note" data-note="D#" data-semitones="3">
+                        <div class="key-indicator"></div>
+                        <span class="key-label">D#</span>
+                    </div>
+                    <div class="buchla-key" data-note="E" data-semitones="4">
+                        <div class="key-indicator"></div>
+                        <span class="key-label">E</span>
+                    </div>
+                    <div class="buchla-key" data-note="F" data-semitones="5">
+                        <div class="key-indicator"></div>
+                        <span class="key-label">F</span>
+                    </div>
+                    <div class="buchla-key is-black-note" data-note="F#" data-semitones="6">
+                        <div class="key-indicator"></div>
+                        <span class="key-label">F#</span>
+                    </div>
+                    <div class="buchla-key" data-note="G" data-semitones="7">
+                        <div class="key-indicator"></div>
+                        <span class="key-label">G</span>
+                    </div>
+                    <div class="buchla-key is-black-note" data-note="G#" data-semitones="8">
+                        <div class="key-indicator"></div>
+                        <span class="key-label">G#</span>
+                    </div>
+                    <div class="buchla-key" data-note="A" data-semitones="9">
+                        <div class="key-indicator"></div>
+                        <span class="key-label">A</span>
+                    </div>
+                    <div class="buchla-key is-black-note" data-note="A#" data-semitones="10">
+                        <div class="key-indicator"></div>
+                        <span class="key-label">A#</span>
+                    </div>
+                    <div class="buchla-key" data-note="B" data-semitones="11">
+                        <div class="key-indicator"></div>
+                        <span class="key-label">B</span>
+                    </div>
+                </div>
+
+                <div class="controls-grid" style="margin-top: 14px;">
+                    <div class="control-group">
+                        <label for="octave-shift">Trasposizione Ottava Sequencer</label>
+                        <select id="octave-shift">
+                            <option value="-12">-1 Ottava (Sub)</option>
+                            <option value="0" selected>0 Ottava (Standard)</option>
+                            <option value="12">+1 Ottava (High)</option>
+                        </select>
+                    </div>
+                    <div class="control-group" style="justify-content: flex-end;">
+                        <button id="reset-root-btn" class="btn btn-action" style="margin-top: 14px;">RESET ROOT (C)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: EFFETTI -->
+        <div id="tab-fx" class="tab-page">
+            <div class="module">
+                <div class="module-title">FX Rack (Reverb, Delay & Auto-Compensated Tape)</div>
+                
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label for="reverb-type">Tipo Riverbero</label>
+                        <select id="reverb-type">
+                            <option value="shimmer" selected>Shimmer (Spaziale / Etereo)</option>
+                            <option value="spring">Spring (Molla Vintage Anni '80)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="reverb-send">Mandata Reverb <span id="reverb-val" class="lcd-text">0%</span></label>
+                        <input type="range" id="reverb-send" min="0" max="100" value="0">
+                    </div>
+                </div>
+                <div class="mod-row">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="mod-reverb-enabled">
+                        <label for="mod-reverb-enabled">Mod. S&H Reverb Send</label>
+                    </div>
+                    <div class="control-group">
+                        <input type="range" id="mod-reverb-depth" min="0" max="100" value="0">
+                    </div>
+                </div>
+
+                <!-- Tape Saturation Cassette Control -->
+                <div class="controls-grid" style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; margin-top: 6px;">
+                    <div class="control-group">
+                        <label for="tape-drive">Saturazione Cassetta (Drive) <span id="tape-drive-val" class="lcd-text">0.0x</span></label>
+                        <input type="range" id="tape-drive" min="0.0" max="5.0" step="0.1" value="0.0">
+                    </div>
+                    <div class="control-group">
+                        <label for="tape-warmth">Calore / Filtro Nastro <span id="tape-warmth-val" class="lcd-text">50%</span></label>
+                        <input type="range" id="tape-warmth" min="0" max="100" value="50">
+                    </div>
+                </div>
+
+                <div class="controls-grid" style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; margin-top: 6px;">
+                    <div class="control-group">
+                        <label for="delay-division">Tempo Delay (Ritmo)</label>
+                        <select id="delay-division">
+                            <option value="0.5">1/2 (Mezzo Battito)</option>
+                            <option value="1">1/4 (Quarto)</option>
+                            <option value="0.75" selected>1/8. (Ottavo Puntato)</option>
+                            <option value="0.5_div">1/8 (Ottavo)</option>
+                            <option value="0.333">1/8T (Ottavo Terzinato)</option>
+                            <option value="0.25">1/16 (Sedicesimo)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="delay-feedback">Feedback Delay (Controllato) <span id="delay-fb-val" class="lcd-text">25%</span></label>
+                        <input type="range" id="delay-feedback" min="0" max="100" value="25">
+                    </div>
+                </div>
+
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label for="delay-send">Mandata Tape Delay <span id="delay-send-val" class="lcd-text">0%</span></label>
+                        <input type="range" id="delay-send" min="0" max="100" value="0">
+                    </div>
+                    <div class="control-group" style="justify-content: flex-end;">
+                        <div class="checkbox-group" style="margin-top: 14px;">
+                            <input type="checkbox" id="delay-stereo-enabled" checked>
+                            <label for="delay-stereo-enabled"><strong>Stereo Image Attivo</strong></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group" style="margin-top: 4px;">
+                    <label for="delay-stereo-width">Delay Stereo Width (Ampiezza) <span id="delay-width-val" class="lcd-text">70%</span></label>
+                    <input type="range" id="delay-stereo-width" min="0" max="100" value="70">
+                </div>
+
+                <div class="mod-row">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="mod-delay-enabled">
+                        <label for="mod-delay-enabled">Mod. S&H Delay Send</label>
+                    </div>
+                    <div class="control-group">
+                        <input type="range" id="mod-delay-depth" min="0" max="100" value="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gestione Tab della Pagina
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+
+                const targetTab = e.target.getAttribute('data-tab');
+                e.target.classList.add('active');
+                document.getElementById(targetTab).classList.add('active');
+            });
+        });
+
+        // Offset di trasposizione globale in semitoni
+        let rootTransposeSemitones = 0;
+
+        function generateScaleNotes(baseIntervals) {
+            const notes = [];
+            const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+            for (let octave = 0; octave <= 7; octave++) {
+                baseIntervals.forEach(semitone => {
+                    const midiNote = (octave + 1) * 12 + semitone;
+                    const freq = 440 * Math.pow(2, (midiNote - 69) / 12);
+                    if (freq >= 20 && freq <= 3000) {
+                        const name = noteNames[semitone % 12] + octave;
+                        notes.push({ note: name, freq: parseFloat(freq.toFixed(2)) });
+                    }
+                });
+            }
+            return notes;
+        }
+
+        const SCALES = {
+            pentatonic: generateScaleNotes([4, 7, 9, 11, 2]),
+            major: generateScaleNotes([0, 2, 4, 5, 7, 9, 11]),
+            minor: generateScaleNotes([9, 11, 0, 2, 4, 5, 7]),
+            dorian: generateScaleNotes([2, 4, 5, 7, 9, 11, 0]),
+            chromatic: generateScaleNotes([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+        };
+
+        let audioCtx = null;
+        let masterGain = null;
+        let reverbSendGain = null;
+        let convolver = null;
+
+        let tapeSaturatorNode = null;
+        let tapeFilterNode = null;
+        let tapeCompensatorGain = null;
+
+        let delaySendGain = null;
+        let delayNodeL = null;
+        let delayNodeR = null;
+        let delayFeedbackGain = null;
+        let delayFilterNode = null;
+        let delayPannerL = null;
+        let delayPannerR = null;
+
+        let pulserOsc = null;
+        let pulserGain = null;
+        let ledTimer = null;
+
+        let isPlaying = false;
+        let currentStep = 0;
+        let timerId = null;
+        let currentSampleHoldValue = 0;
+
+        let isRecording = false;
+        let recorderProcessor = null;
+        let recLeftBuffers = [];
+        let recRightBuffers = [];
+        let recLength = 0;
+
+        const stepsState = [];
+        for (let i = 0; i < 32; i++) {
+            stepsState.push({
+                active: i < 5 ? (i !== 3) : (i % 2 === 0),
+                sliderVal: 8 + (i % 5),
+                freq: 440
+            });
+        }
+
+        const FACTORY_PRESETS = {
+            init: {
+                name: "00. Init (Inizializzazione)",
+                scale: "pentatonic", freePitch: false, waveform: "sine", fold: 1.0,
+                fmDepth: 0, fmRatio: 1.0, fmFree: false, attack: 15, decay: 200, sustain: 40,
+                release: 300, cutoff: 100, envAmount: 2000, reverbType: "shimmer", reverbSend: 0,
+                delayDiv: "0.75", delayFb: 25, delaySend: 0, bpm: 120, seqLength: 5,
+                pulserRate: 2.0, pulserCycle: true, pulserDepth: 20, modPulserCutoff: false,
+                pulserTrigEnv: false, pulserTrigAmt: 50,
+                tapeDrive: 0.0, tapeWarmth: 50,
+                stereoEnabled: true, stereoWidth: 70,
+                modPitch: false, modPitchDepth: 0, modDecay: false, modDecayDepth: 0,
+                modCutoff: false, modCutoffDepth: 0, modReverb: false, modReverbDepth: 0,
+                modDelay: false, modDelayDepth: 0
+            },
+            default: {
+                name: "01. Default Ambient",
+                scale: "pentatonic", freePitch: false, waveform: "sawtooth", fold: 1.0,
+                fmDepth: 0, fmRatio: 1.0, fmFree: false, attack: 15, decay: 200, sustain: 40,
+                release: 300, cutoff: 80, envAmount: 4000, reverbType: "shimmer", reverbSend: 50,
+                delayDiv: "0.75", delayFb: 30, delaySend: 30, bpm: 120, seqLength: 8,
+                pulserRate: 1.5, pulserCycle: true, pulserDepth: 35, modPulserCutoff: true,
+                pulserTrigEnv: false, pulserTrigAmt: 50,
+                tapeDrive: 0.8, tapeWarmth: 60,
+                stereoEnabled: true, stereoWidth: 70,
+                modPitch: false, modPitchDepth: 0, modDecay: false, modDecayDepth: 0,
+                modCutoff: false, modCutoffDepth: 0, modReverb: false, modReverbDepth: 0,
+                modDelay: false, modDelayDepth: 0
+            },
+            westcoast: {
+                name: "02. West-Coast Wavefold",
+                scale: "dorian", freePitch: false, waveform: "triangle", fold: 6.5,
+                fmDepth: 350, fmRatio: 2.0, fmFree: false, attack: 5, decay: 150, sustain: 10,
+                release: 180, cutoff: 120, envAmount: 6500, reverbType: "spring", reverbSend: 35,
+                delayDiv: "0.5_div", delayFb: 35, delaySend: 45, bpm: 110, seqLength: 16,
+                pulserRate: 4.0, pulserCycle: true, pulserDepth: 50, modPulserCutoff: true,
+                pulserTrigEnv: true, pulserTrigAmt: 65,
+                tapeDrive: 1.5, tapeWarmth: 75,
+                stereoEnabled: true, stereoWidth: 90,
+                modPitch: false, modPitchDepth: 0, modDecay: true, modDecayDepth: 40,
+                modCutoff: true, modCutoffDepth: 75, modReverb: false, modReverbDepth: 0,
+                modDelay: true, modDelayDepth: 30
+            },
+            sub_sh: {
+                name: "03. Deep Sub S&H",
+                scale: "minor", freePitch: true, waveform: "square", fold: 2.0,
+                fmDepth: 120, fmRatio: 55, fmFree: true, attack: 30, decay: 450, sustain: 60,
+                release: 500, cutoff: 40, envAmount: 2200, reverbType: "shimmer", reverbSend: 60,
+                delayDiv: "1", delayFb: 40, delaySend: 50, bpm: 90, seqLength: 32,
+                pulserRate: 0.8, pulserCycle: true, pulserDepth: 70, modPulserCutoff: true,
+                pulserTrigEnv: false, pulserTrigAmt: 50,
+                tapeDrive: 2.0, tapeWarmth: 85,
+                stereoEnabled: true, stereoWidth: 100,
+                modPitch: true, modPitchDepth: 45, modDecay: true, modDecayDepth: 60,
+                modCutoff: true, modCutoffDepth: 80, modReverb: true, modReverbDepth: 50,
+                modDelay: true, modDelayDepth: 65
+            },
+            cassette_warm: {
+                name: "04. Lo-Fi Tape Warmth",
+                scale: "pentatonic", freePitch: false, waveform: "sawtooth", fold: 2.5,
+                fmDepth: 80, fmRatio: 1.5, fmFree: false, attack: 20, decay: 350, sustain: 30,
+                release: 400, cutoff: 110, envAmount: 3200, reverbType: "spring", reverbSend: 45,
+                delayDiv: "0.75", delayFb: 35, delaySend: 40, bpm: 105, seqLength: 8,
+                pulserRate: 2.5, pulserCycle: true, pulserDepth: 40, modPulserCutoff: true,
+                pulserTrigEnv: false, pulserTrigAmt: 50,
+                tapeDrive: 3.8, tapeWarmth: 90,
+                stereoEnabled: true, stereoWidth: 85,
+                modPitch: true, modPitchDepth: 15, modDecay: false, modDecayDepth: 0,
+                modCutoff: true, modCutoffDepth: 35, modReverb: false, modReverbDepth: 0,
+                modDelay: false, modDelayDepth: 0
+            }
+        };
+
+        function setupBuchlaTouchEvents() {
+            const keys = document.querySelectorAll('.buchla-key');
+            
+            keys.forEach(key => {
+                const noteName = key.getAttribute('data-note');
+                const semitones = parseInt(key.getAttribute('data-semitones'));
+
+                const handlePress = (e) => {
+                    e.preventDefault();
+                    key.classList.add('pressed');
+                    
+                    // Imposta nuova root per la trasposizione SILENZIOSA del Sequencer
+                    rootTransposeSemitones = semitones;
+                    
+                    keys.forEach(k => k.classList.remove('active-root'));
+                    key.classList.add('active-root');
+
+                    document.getElementById('current-root-display').innerText = `Root: ${noteName} (+${semitones} ST)`;
+
+                    // Aggiorna frequenze di tutti i passi del sequencer in tempo reale
+                    for (let i = 0; i < 32; i++) {
+                        updateStepPitchDisplay(i);
+                    }
+                    
+                    // NESSUN AUDIO VIENE EMESSO AL CLICK! (Audio Silenzioso come richiesto)
+                };
+
+                const handleRelease = () => {
+                    key.classList.remove('pressed');
+                };
+
+                key.addEventListener('mousedown', handlePress);
+                key.addEventListener('mouseup', handleRelease);
+                key.addEventListener('mouseleave', handleRelease);
+
+                key.addEventListener('touchstart', handlePress, { passive: false });
+                key.addEventListener('touchend', handleRelease);
+            });
+
+            // Set C come root attiva di default
+            const defaultKey = document.querySelector('.buchla-key[data-note="C"]');
+            if (defaultKey) defaultKey.classList.add('active-root');
+
+            document.getElementById('reset-root-btn').addEventListener('click', () => {
+                rootTransposeSemitones = 0;
+                keys.forEach(k => k.classList.remove('active-root'));
+                if (defaultKey) defaultKey.classList.add('active-root');
+                document.getElementById('current-root-display').innerText = `Root: C (0 ST)`;
+                for (let i = 0; i < 32; i++) {
+                    updateStepPitchDisplay(i);
+                }
+            });
+
+            document.getElementById('octave-shift').addEventListener('change', () => {
+                for (let i = 0; i < 32; i++) {
+                    updateStepPitchDisplay(i);
+                }
+            });
+        }
+
+        function buildSequencerDOM() {
+            const gridRoot = document.getElementById('step-grid-root');
+            gridRoot.innerHTML = '';
+            for (let i = 0; i < 32; i++) {
+                const col = document.createElement('div');
+                col.className = 'step-col';
+                col.setAttribute('data-col', i);
+                col.innerHTML = `
+                    <button class="step-btn ${stepsState[i].active ? 'active' : ''}" data-step="${i}">${i + 1}</button>
+                    <div class="pitch-container">
+                        <input type="range" class="vertical-slider pitch-slider" data-step="${i}" value="${stepsState[i].sliderVal}">
+                    </div>
+                    <div class="lcd-display"><span class="pitch-val" data-step="${i}">--</span></div>
+                `;
+                gridRoot.appendChild(col);
+            }
+            attachSequencerEvents();
+        }
+
+        function attachSequencerEvents() {
+            document.querySelectorAll('.pitch-slider').forEach(slider => {
+                slider.addEventListener('input', (e) => {
+                    const idx = parseInt(e.target.dataset.step);
+                    stepsState[idx].sliderVal = parseInt(e.target.value);
+                    updateStepPitchDisplay(idx);
+                });
+            });
+
+            document.querySelectorAll('.step-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.step);
+                    stepsState[idx].active = !stepsState[idx].active;
+                    e.target.classList.toggle('active', stepsState[idx].active);
+                });
+            });
+        }
+
+        function updateDelayTime() {
+            if (!delayNodeL || !audioCtx) return;
+            const bpm = parseInt(document.getElementById('bpm').value);
+            const divisionStr = document.getElementById('delay-division').value;
+            
+            let multiplier = 1;
+            if (divisionStr === '0.5') multiplier = 2;
+            else if (divisionStr === '1') multiplier = 1;
+            else if (divisionStr === '0.75') multiplier = 0.75;
+            else if (divisionStr === '0.5_div') multiplier = 0.5;
+            else if (divisionStr === '0.333') multiplier = 1/3;
+            else if (divisionStr === '0.25') multiplier = 0.25;
+
+            const beatDuration = 60 / bpm;
+            const delaySeconds = beatDuration * multiplier;
+            
+            const widthOffset = document.getElementById('delay-stereo-enabled').checked ? (parseInt(document.getElementById('delay-stereo-width').value) / 100) * 0.015 : 0;
+            
+            delayNodeL.delayTime.setTargetAtTime(Math.max(0.01, delaySeconds), audioCtx.currentTime, 0.05);
+            delayNodeR.delayTime.setTargetAtTime(Math.max(0.01, delaySeconds + widthOffset), audioCtx.currentTime, 0.05);
+        }
+
+        function updateDelayFeedbackGain() {
+            if (!delayFeedbackGain || !audioCtx) return;
+            const userFb = parseFloat(document.getElementById('delay-feedback').value);
+            let gainVal = (userFb / 100) * 0.45; 
+            delayFeedbackGain.gain.setTargetAtTime(gainVal, audioCtx.currentTime, 0.05);
+        }
+
+        function updateStereoWidth() {
+            if (!delayPannerL || !delayPannerR) return;
+            const isEnabled = document.getElementById('delay-stereo-enabled').checked;
+            const widthVal = isEnabled ? (parseInt(document.getElementById('delay-stereo-width').value) / 100) : 0;
+
+            delayPannerL.pan.value = -widthVal;
+            delayPannerR.pan.value = widthVal;
+            updateDelayTime();
+            updateDelayFeedbackGain();
+        }
+
+        function generateTapeSaturationCurve(drive = 0.0) {
+            const samples = 4096;
+            const curve = new Float32Array(samples);
+            const k = drive * 2.5;
+
+            for (let i = 0; i < samples; i++) {
+                const x = (i / (samples - 1)) * 2 - 1;
+                if (k === 0) {
+                    curve[i] = x;
+                } else {
+                    curve[i] = Math.tanh(x * (1 + k)) + 0.05 * Math.sin(x * Math.PI * k);
+                }
+            }
+            return curve;
+        }
+
+        function updateTapeSaturation() {
+            if (!tapeSaturatorNode || !tapeFilterNode || !tapeCompensatorGain || !audioCtx) return;
+
+            const driveVal = parseFloat(document.getElementById('tape-drive').value);
+            const warmthVal = parseFloat(document.getElementById('tape-warmth').value);
+
+            tapeSaturatorNode.curve = generateTapeSaturationCurve(driveVal);
+            
+            const cutoffFreq = 14000 - (warmthVal / 100) * 11500;
+            tapeFilterNode.frequency.setTargetAtTime(cutoffFreq, audioCtx.currentTime, 0.05);
+
+            const compensatedGain = 1.0 / (1.0 + (driveVal * 0.42));
+            tapeCompensatorGain.gain.setTargetAtTime(compensatedGain, audioCtx.currentTime, 0.05);
+        }
+
+        function generateWavefoldCurve(drive = 1.0) {
+            const samples = 4096;
+            const curve = new Float32Array(samples);
+            for (let i = 0; i < samples; i++) {
+                const x = (i / (samples - 1)) * 2 - 1;
+                curve[i] = Math.sin(x * Math.PI * drive);
+            }
+            return curve;
+        }
+
+        function createReverbImpulse(ctx, type) {
+            const sampleRate = ctx.sampleRate;
+            let duration = 3.5;
+            let decay = 2.0;
+
+            if (type === 'shimmer') {
+                duration = 5.0;
+                decay = 1.2;
+            } else if (type === 'spring') {
+                duration = 2.0;
+                decay = 3.5;
+            }
+
+            const length = sampleRate * duration;
+            const impulse = ctx.createBuffer(2, length, sampleRate);
+            const left = impulse.getChannelData(0);
+            const right = impulse.getChannelData(1);
+
+            for (let i = 0; i < length; i++) {
+                const n = length - i;
+                let envelope = Math.pow(n / length, decay);
+                
+                if (type === 'spring') {
+                    envelope *= (1 + 0.3 * Math.sin(i * 0.05));
+                }
+
+                left[i] = (Math.random() * 2 - 1) * envelope;
+                right[i] = (Math.random() * 2 - 1) * envelope;
+            }
+            return impulse;
+        }
+
+        function updateReverbBuffer() {
+            if (!audioCtx || !convolver) return;
+            const type = document.getElementById('reverb-type').value;
+            convolver.buffer = createReverbImpulse(audioCtx, type);
+        }
+
+        function initAudio() {
+            if (audioCtx) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext({ sampleRate: 48000 });
+
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.8;
+
+            tapeSaturatorNode = audioCtx.createWaveShaper();
+            tapeSaturatorNode.oversample = '4x';
+            
+            tapeFilterNode = audioCtx.createBiquadFilter();
+            tapeFilterNode.type = 'lowpass';
+
+            tapeCompensatorGain = audioCtx.createGain();
+            
+            updateTapeSaturation();
+
+            reverbSendGain = audioCtx.createGain();
+            reverbSendGain.gain.value = parseFloat(document.getElementById('reverb-send').value) / 100;
+
+            convolver = audioCtx.createConvolver();
+            updateReverbBuffer();
+
+            delaySendGain = audioCtx.createGain();
+            delaySendGain.gain.value = parseFloat(document.getElementById('delay-send').value) / 100;
+
+            delayNodeL = audioCtx.createDelay(4.0);
+            delayNodeR = audioCtx.createDelay(4.0);
+            updateDelayTime();
+
+            delayFeedbackGain = audioCtx.createGain();
+            updateDelayFeedbackGain();
+
+            delayFilterNode = audioCtx.createBiquadFilter();
+            delayFilterNode.type = 'lowpass';
+            delayFilterNode.frequency.value = 3200;
+
+            delayPannerL = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+            delayPannerR = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+
+            if (delayPannerL && delayPannerR) {
+                updateStereoWidth();
+            }
+
+            delaySendGain.connect(delayNodeL);
+            delaySendGain.connect(delayNodeR);
+
+            delayNodeL.connect(delayFilterNode);
+            delayNodeR.connect(delayFilterNode);
+
+            delayFilterNode.connect(delayFeedbackGain);
+            delayFeedbackGain.connect(delayNodeL);
+            delayFeedbackGain.connect(delayNodeR);
+
+            if (delayPannerL && delayPannerR) {
+                delayNodeL.connect(delayPannerL);
+                delayNodeR.connect(delayPannerR);
+                delayPannerL.connect(tapeSaturatorNode);
+                delayPannerR.connect(tapeSaturatorNode);
+            } else {
+                delayNodeL.connect(tapeSaturatorNode);
+                delayNodeR.connect(tapeSaturatorNode);
+            }
+
+            reverbSendGain.connect(convolver);
+            convolver.connect(tapeSaturatorNode);
+
+            tapeSaturatorNode.connect(tapeFilterNode);
+            tapeFilterNode.connect(tapeCompensatorGain);
+            tapeCompensatorGain.connect(masterGain);
+
+            initPulser();
+
+            masterGain.connect(audioCtx.destination);
+        }
+
+        function initPulser() {
+            if (!audioCtx) return;
+            if (pulserOsc) {
+                try { pulserOsc.stop(); } catch(e){}
+            }
+
+            pulserOsc = audioCtx.createOscillator();
+            pulserGain = audioCtx.createGain();
+
+            const rate = parseFloat(document.getElementById('pulser-rate').value);
+            const depth = parseFloat(document.getElementById('pulser-depth').value) * 20;
+
+            pulserOsc.type = 'triangle';
+            pulserOsc.frequency.value = rate;
+            pulserGain.gain.value = document.getElementById('pulser-cycle').checked ? depth : 0;
+
+            pulserOsc.connect(pulserGain);
+            pulserOsc.start();
+
+            startLedAnimation(rate);
+        }
+
+        function startLedAnimation(rate) {
+            if (ledTimer) clearInterval(ledTimer);
+            const led = document.getElementById('pulser-led');
+            if (!led) return;
+
+            const intervalMs = (1 / rate) * 500;
+            let tickState = false;
+
+            ledTimer = setInterval(() => {
+                if (!document.getElementById('pulser-cycle').checked && pulserGain.gain.value < 1) {
+                    led.classList.remove('lit');
+                    return;
+                }
+                tickState = !tickState;
+                if (tickState) {
+                    led.classList.add('lit');
+                    if (document.getElementById('pulser-trig-env').checked) {
+                        const trigAmt = parseFloat(document.getElementById('pulser-trig-amt').value) / 100;
+                        if (trigAmt > 0) {
+                            playNote(stepsState[currentStep].freq || 440, 0.3 * trigAmt);
+                        }
+                    }
+                } else {
+                    led.classList.remove('lit');
+                }
+            }, Math.max(50, intervalMs));
+        }
+
+        function triggerPulserShot() {
+            if (!audioCtx) return;
+            
+            const depth = parseFloat(document.getElementById('pulser-depth').value) * 30;
+            const now = audioCtx.currentTime;
+            pulserGain.gain.setValueAtTime(depth, now);
+            pulserGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+            const led = document.getElementById('pulser-led');
+            if (led) {
+                led.classList.add('lit');
+                setTimeout(() => led.classList.remove('lit'), 150);
+            }
+
+            if (document.getElementById('pulser-trig-env').checked) {
+                const trigAmt = parseFloat(document.getElementById('pulser-trig-amt').value) / 100;
+                if (trigAmt > 0) {
+                    playNote(stepsState[currentStep].freq || 440, 0.3 * trigAmt);
+                }
+            }
+        }
+
+        function playNote(freq, noteDuration = 0.4) {
+            initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const now = audioCtx.currentTime;
+            currentSampleHoldValue = (Math.random() * 2) - 1;
+
+            let targetFreq = freq;
+            if (document.getElementById('mod-pitch-enabled').checked) {
+                const depth = parseFloat(document.getElementById('mod-pitch-depth').value) / 100;
+                targetFreq = Math.max(20, Math.min(3000, freq + (currentSampleHoldValue * depth * 300)));
+            }
+
+            const attackTime = Math.max(0.003, parseFloat(document.getElementById('env-attack').value) / 1000);
+            
+            let baseDecay = parseFloat(document.getElementById('env-decay').value);
+            if (document.getElementById('mod-decay-enabled').checked) {
+                const depth = parseFloat(document.getElementById('mod-decay-depth').value) / 100;
+                baseDecay = Math.max(10, baseDecay + (currentSampleHoldValue * depth * 800));
+            }
+            const decayTime = Math.max(0.01, baseDecay / 1000);
+
+            const sustainLevel = parseFloat(document.getElementById('env-sustain').value) / 100;
+            const releaseTime = Math.max(0.02, parseFloat(document.getElementById('env-release').value) / 1000);
+
+            const carrier = audioCtx.createOscillator();
+            carrier.type = document.getElementById('waveform').value;
+            carrier.frequency.setValueAtTime(targetFreq, now);
+
+            const wavefolder = audioCtx.createWaveShaper();
+            const driveVal = parseFloat(document.getElementById('wavefold-drive').value);
+            wavefolder.curve = generateWavefoldCurve(driveVal);
+            wavefolder.oversample = '4x';
+
+            const modulator = audioCtx.createOscillator();
+            const modGain = audioCtx.createGain();
+
+            const fmDepth = parseFloat(document.getElementById('fm-depth').value);
+            const isFmFree = document.getElementById('fm-free-mode').checked;
+            const fmSliderVal = parseFloat(document.getElementById('fm-ratio').value);
+
+            let modFreq = isFmFree ? fmSliderVal : targetFreq * fmSliderVal;
+
+            modulator.type = 'sine';
+            modulator.frequency.setValueAtTime(modFreq, now);
+            modGain.gain.setValueAtTime(fmDepth, now);
+
+            modulator.connect(modGain);
+            modGain.connect(carrier.frequency);
+
+            const lpgFilter = audioCtx.createBiquadFilter();
+            lpgFilter.type = 'lowpass';
+            lpgFilter.Q.value = 0.8;
+
+            if (document.getElementById('mod-pulser-cutoff').checked && pulserGain) {
+                pulserGain.connect(lpgFilter.frequency);
+            }
+
+            const lpgGain = audioCtx.createGain();
+
+            let baseCutoff = parseFloat(document.getElementById('lpg-cutoff').value);
+            if (document.getElementById('mod-cutoff-enabled').checked) {
+                const depth = parseFloat(document.getElementById('mod-cutoff-depth').value) / 100;
+                baseCutoff = Math.max(20, Math.min(8000, baseCutoff + (currentSampleHoldValue * depth * 2000)));
+            }
+
+            const envAmount = parseFloat(document.getElementById('lpg-env-amount').value);
+            const gateLength = Math.max(0.05, noteDuration * 0.8);
+            const peakCutoff = Math.min(12000, baseCutoff + envAmount);
+            const sustainCutoff = Math.min(12000, baseCutoff + (envAmount * sustainLevel));
+
+            lpgFilter.frequency.setValueAtTime(baseCutoff, now);
+            lpgFilter.frequency.exponentialRampToValueAtTime(Math.max(20, peakCutoff), now + attackTime);
+            lpgFilter.frequency.setTargetAtTime(Math.max(20, sustainCutoff), now + attackTime, decayTime * 0.4);
+            lpgFilter.frequency.setTargetAtTime(Math.max(20, baseCutoff), now + gateLength, releaseTime * 0.4);
+
+            const maxPeakGain = 0.35;
+            const sustainGain = Math.max(0.0001, maxPeakGain * sustainLevel);
+
+            lpgGain.gain.setValueAtTime(0.00001, now);
+            lpgGain.gain.exponentialRampToValueAtTime(maxPeakGain, now + attackTime);
+            lpgGain.gain.setTargetAtTime(sustainGain, now + attackTime, decayTime * 0.4);
+            lpgGain.gain.setTargetAtTime(0.00001, now + gateLength, releaseTime * 0.3);
+
+            let currentReverbSend = parseFloat(document.getElementById('reverb-send').value) / 100;
+            if (document.getElementById('mod-reverb-enabled').checked) {
+                const depth = parseFloat(document.getElementById('mod-reverb-depth').value) / 100;
+                currentReverbSend = Math.max(0, Math.min(1, currentReverbSend + (currentSampleHoldValue * depth * 0.5)));
+            }
+
+            let currentDelaySend = parseFloat(document.getElementById('delay-send').value) / 100;
+            if (document.getElementById('mod-delay-enabled').checked) {
+                const depth = parseFloat(document.getElementById('mod-delay-depth').value) / 100;
+                currentDelaySend = Math.max(0, Math.min(1, currentDelaySend + (currentSampleHoldValue * depth * 0.5)));
+            }
+
+            const dynamicReverbGain = audioCtx.createGain();
+            dynamicReverbGain.gain.value = currentReverbSend;
+            
+            const dynamicDelayGain = audioCtx.createGain();
+            dynamicDelayGain.gain.value = currentDelaySend;
+
+            carrier.connect(wavefolder);
+            wavefolder.connect(lpgFilter);
+            lpgFilter.connect(lpgGain);
+
+            lpgGain.connect(tapeSaturatorNode);
+            lpgGain.connect(dynamicReverbGain);
+            dynamicReverbGain.connect(reverbSendGain);
+
+            lpgGain.connect(dynamicDelayGain);
+            dynamicDelayGain.connect(delaySendGain);
+
+            const totalDuration = gateLength + releaseTime + 0.5;
+
+            modulator.start(now);
+            carrier.start(now);
+
+            modulator.stop(now + totalDuration);
+            carrier.stop(now + totalDuration);
+        }
+
+        function updateStepPitchDisplay(stepIdx) {
+            const isFree = document.getElementById('free-pitch').checked;
+            const slider = document.querySelector(`.pitch-slider[data-step="${stepIdx}"]`);
+            const display = document.querySelector(`.pitch-val[data-step="${stepIdx}"]`);
+            
+            if (!slider || !display) return;
+
+            const octaveOffsetSemitones = parseInt(document.getElementById('octave-shift').value);
+            const totalSemitonesOffset = rootTransposeSemitones + octaveOffsetSemitones;
+
+            if (isFree) {
+                const baseFreq = parseFloat(slider.value);
+                const transposedFreq = baseFreq * Math.pow(2, totalSemitonesOffset / 12);
+                stepsState[stepIdx].freq = parseFloat(transposedFreq.toFixed(2));
+                display.innerText = `${Math.round(transposedFreq)}Hz`;
+            } else {
+                const scaleKey = document.getElementById('scale-select').value;
+                const scale = SCALES[scaleKey];
+                const index = parseInt(slider.value);
+                const noteObj = scale[index] || scale[0];
+                
+                const transposedFreq = noteObj.freq * Math.pow(2, totalSemitonesOffset / 12);
+                stepsState[stepIdx].freq = parseFloat(transposedFreq.toFixed(2));
+                display.innerText = `${noteObj.note} (${Math.round(transposedFreq)}Hz)`;
+            }
+        }
+
+        function updateAllSlidersConfig() {
+            const isFree = document.getElementById('free-pitch').checked;
+            const scaleKey = document.getElementById('scale-select').value;
+
+            document.querySelectorAll('.pitch-slider').forEach((slider, idx) => {
+                if (isFree) {
+                    slider.min = "20";
+                    slider.max = "3000";
+                    slider.step = "5";
+                    slider.value = stepsState[idx].freq || 440;
+                } else {
+                    const scale = SCALES[scaleKey];
+                    slider.min = "0";
+                    slider.max = (scale.length - 1).toString();
+                    slider.step = "1";
+                    slider.value = Math.min(stepsState[idx].sliderVal, scale.length - 1);
+                }
+                updateStepPitchDisplay(idx);
+            });
+        }
+
+        function updateSequencerLengthDisplay() {
+            const seqLen = parseInt(document.getElementById('seq-length').value);
+            document.querySelectorAll('.step-col').forEach((col, idx) => {
+                if (idx < seqLen) {
+                    col.classList.remove('hidden');
+                } else {
+                    col.classList.add('hidden');
+                }
+            });
+            if (currentStep >= seqLen) {
+                currentStep = 0;
+            }
+        }
+
+        function stepTick() {
+            const seqLen = parseInt(document.getElementById('seq-length').value);
+
+            document.querySelectorAll('.step-btn').forEach((btn, idx) => {
+                btn.classList.toggle('current', idx === currentStep);
+            });
+
+            const stepData = stepsState[currentStep];
+            if (stepData && stepData.active && !document.getElementById('pulser-trig-env').checked) {
+                playNote(stepData.freq, 0.4);
+            }
+
+            currentStep = (currentStep + 1) % seqLen;
+            
+            const bpm = parseInt(document.getElementById('bpm').value);
+            const interval = (60 / bpm) * 1000 / 2;
+            timerId = setTimeout(stepTick, interval);
+        }
+
+        function toggleRecording() {
+            initAudio();
+            const recBtn = document.getElementById('rec-btn');
+
+            if (!isRecording) {
+                isRecording = true;
+                recLeftBuffers = [];
+                recRightBuffers = [];
+                recLength = 0;
+
+                recorderProcessor = audioCtx.createScriptProcessor(4096, 2, 2);
+                recorderProcessor.onaudioprocess = function(e) {
+                    if (!isRecording) return;
+                    const left = e.inputBuffer.getChannelData(0);
+                    const right = e.inputBuffer.getChannelData(1);
+
+                    recLeftBuffers.push(new Float32Array(left));
+                    recRightBuffers.push(new Float32Array(right));
+                    recLength += left.length;
+                };
+
+                masterGain.connect(recorderProcessor);
+                recorderProcessor.connect(audioCtx.destination);
+
+                recBtn.innerText = "■ STOP REC";
+                recBtn.classList.add('recording');
+            } else {
+                isRecording = false;
+                recBtn.innerText = "● REC WAV (48k/32b)";
+                recBtn.classList.remove('recording');
+
+                if (recorderProcessor) {
+                    recorderProcessor.disconnect();
+                    masterGain.disconnect(recorderProcessor);
+                }
+
+                exportWAV32Bit(recLeftBuffers, recRightBuffers, recLength, audioCtx.sampleRate);
+            }
+        }
+
+        function exportWAV32Bit(leftChunks, rightChunks, length, sampleRate) {
+            const bufferL = mergeBuffers(leftChunks, length);
+            const bufferR = mergeBuffers(rightChunks, length);
+
+            const interleaved = interleave(bufferL, bufferR);
+            const wavBuffer = createWav32BitFloatHeader(interleaved, sampleRate);
+
+            const blob = new Blob([wavBuffer], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `RetroSynth_Performance_48k_32bit_${Date.now()}.wav`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function mergeBuffers(channelBuffer, recordingLength) {
+            const result = new Float32Array(recordingLength);
+            let offset = 0;
+            for (let i = 0; i < channelBuffer.length; i++) {
+                result.set(channelBuffer[i], offset);
+                offset += channelBuffer[i].length;
+            }
+            return result;
+        }
+
+        function interleave(inputL, inputR) {
+            const length = inputL.length + inputR.length;
+            const result = new Float32Array(length);
+
+            let index = 0;
+            let inputIndex = 0;
+            while (index < length) {
+                result[index++] = inputL[inputIndex];
+                result[index++] = inputR[inputIndex];
+                inputIndex++;
+            }
+            return result;
+        }
+
+        function createWav32BitFloatHeader(samples, sampleRate) {
+            const buffer = new ArrayBuffer(44 + samples.length * 4);
+            const view = new DataView(buffer);
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + samples.length * 4, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 3, true);
+            view.setUint16(22, 2, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2 * 4, true);
+            view.setUint16(32, 2 * 4, true);
+            view.setUint16(34, 32, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, samples.length * 4, true);
+
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++, offset += 4) {
+                view.setFloat32(offset, samples[i], true);
+            }
+
+            return buffer;
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        function getPresetsFromStorage() {
+            const stored = localStorage.getItem('retrosynth_custom_presets');
+            return stored ? JSON.parse(stored) : {};
+        }
+
+        function savePresetToStorage(name, presetData) {
+            const custom = getPresetsFromStorage();
+            custom[name] = presetData;
+            localStorage.setItem('retrosynth_custom_presets', JSON.stringify(custom));
+            refreshPresetSelect();
+        }
+
+        function deletePresetFromStorage(key) {
+            const custom = getPresetsFromStorage();
+            delete custom[key];
+            localStorage.setItem('retrosynth_custom_presets', JSON.stringify(custom));
+            refreshPresetSelect();
+        }
+
+        function refreshPresetSelect() {
+            const select = document.getElementById('preset-select');
+            select.innerHTML = '';
+
+            Object.keys(FACTORY_PRESETS).forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.innerText = FACTORY_PRESETS[key].name;
+                select.appendChild(opt);
+            });
+
+            const custom = getPresetsFromStorage();
+            Object.keys(custom).forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = 'user_' + key;
+                opt.innerText = '★ ' + custom[key].name;
+                select.appendChild(opt);
+            });
+        }
+
+        function getCurrentStateAsPreset(name) {
+            return {
+                name: name,
+                scale: document.getElementById('scale-select').value,
+                freePitch: document.getElementById('free-pitch').checked,
+                waveform: document.getElementById('waveform').value,
+                fold: parseFloat(document.getElementById('wavefold-drive').value),
+                fmDepth: parseFloat(document.getElementById('fm-depth').value),
+                fmRatio: parseFloat(document.getElementById('fm-ratio').value),
+                fmFree: document.getElementById('fm-free-mode').checked,
+                attack: parseFloat(document.getElementById('env-attack').value),
+                decay: parseFloat(document.getElementById('env-decay').value),
+                sustain: parseFloat(document.getElementById('env-sustain').value),
+                release: parseFloat(document.getElementById('env-release').value),
+                cutoff: parseFloat(document.getElementById('lpg-cutoff').value),
+                envAmount: parseFloat(document.getElementById('lpg-env-amount').value),
+                reverbType: document.getElementById('reverb-type').value,
+                reverbSend: parseFloat(document.getElementById('reverb-send').value),
+                delayDiv: document.getElementById('delay-division').value,
+                delayFb: parseFloat(document.getElementById('delay-feedback').value),
+                delaySend: parseFloat(document.getElementById('delay-send').value),
+                bpm: parseInt(document.getElementById('bpm').value),
+                seqLength: parseInt(document.getElementById('seq-length').value),
+                pulserRate: parseFloat(document.getElementById('pulser-rate').value),
+                pulserCycle: document.getElementById('pulser-cycle').checked,
+                pulserDepth: parseFloat(document.getElementById('pulser-depth').value),
+                modPulserCutoff: document.getElementById('mod-pulser-cutoff').checked,
+                pulserTrigEnv: document.getElementById('pulser-trig-env').checked,
+                pulserTrigAmt: parseFloat(document.getElementById('pulser-trig-amt').value),
+                tapeDrive: parseFloat(document.getElementById('tape-drive').value),
+                tapeWarmth: parseFloat(document.getElementById('tape-warmth').value),
+                stereoEnabled: document.getElementById('delay-stereo-enabled').checked,
+                stereoWidth: parseInt(document.getElementById('delay-stereo-width').value),
+                modPitch: document.getElementById('mod-pitch-enabled').checked,
+                modPitchDepth: parseFloat(document.getElementById('mod-pitch-depth').value),
+                modDecay: document.getElementById('mod-decay-enabled').checked,
+                modDecayDepth: parseFloat(document.getElementById('mod-decay-depth').value),
+                modCutoff: document.getElementById('mod-cutoff-enabled').checked,
+                modCutoffDepth: parseFloat(document.getElementById('mod-cutoff-depth').value),
+                modReverb: document.getElementById('mod-reverb-enabled').checked,
+                modReverbDepth: parseFloat(document.getElementById('mod-reverb-depth').value),
+                modDelay: document.getElementById('mod-delay-enabled').checked,
+                modDelayDepth: parseFloat(document.getElementById('mod-delay-depth').value)
+            };
+        }
+
+        function loadPresetData(p) {
+            document.getElementById('scale-select').value = p.scale || 'pentatonic';
+            document.getElementById('free-pitch').checked = p.freePitch || false;
+            document.getElementById('waveform').value = p.waveform || 'sine';
+            
+            document.getElementById('wavefold-drive').value = p.fold || 1.0;
+            document.getElementById('fold-val').innerText = (p.fold || 1.0) + 'x';
+
+            document.getElementById('fm-depth').value = p.fmDepth || 0;
+            document.getElementById('fm-depth-val').innerText = p.fmDepth || 0;
+
+            document.getElementById('fm-free-mode').checked = p.fmFree || false;
+            document.getElementById('fm-free-mode').dispatchEvent(new Event('change'));
+
+            document.getElementById('fm-ratio').value = p.fmRatio || 1.0;
+            document.getElementById('fm-param-val').innerText = (p.fmFree ? `${p.fmRatio} Hz` : `${p.fmRatio}x`);
+
+            document.getElementById('env-attack').value = p.attack || 15;
+            document.getElementById('env-attack-val').innerText = (p.attack || 15) + ' ms';
+
+            document.getElementById('env-decay').value = p.decay || 200;
+            document.getElementById('env-decay-val').innerText = (p.decay || 200) + ' ms';
+
+            document.getElementById('env-sustain').value = p.sustain || 40;
+            document.getElementById('env-sustain-val').innerText = (p.sustain || 40) + '%';
+
+            document.getElementById('env-release').value = p.release || 300;
+            document.getElementById('env-release-val').innerText = (p.release || 300) + ' ms';
+
+            document.getElementById('lpg-cutoff').value = p.cutoff || 100;
+            document.getElementById('lpg-cutoff-val').innerText = (p.cutoff || 100) + ' Hz';
+
+            document.getElementById('lpg-env-amount').value = p.envAmount || 2000;
+            document.getElementById('lpg-env-amount-val').innerText = (p.envAmount || 2000) + ' Hz';
+
+            document.getElementById('pulser-rate').value = p.pulserRate !== undefined ? p.pulserRate : 2.0;
+            document.getElementById('pulser-rate-val').innerText = document.getElementById('pulser-rate').value + ' Hz';
+            if (pulserOsc && audioCtx) pulserOsc.frequency.setValueAtTime(parseFloat(document.getElementById('pulser-rate').value), audioCtx.currentTime);
+            startLedAnimation(parseFloat(document.getElementById('pulser-rate').value));
+
+            document.getElementById('pulser-cycle').checked = p.pulserCycle !== undefined ? p.pulserCycle : true;
+            document.getElementById('pulser-depth').value = p.pulserDepth !== undefined ? p.pulserDepth : 20;
+            document.getElementById('mod-pulser-cutoff').checked = p.modPulserCutoff || false;
+
+            document.getElementById('pulser-trig-env').checked = p.pulserTrigEnv || false;
+            document.getElementById('pulser-trig-amt').value = p.pulserTrigAmt !== undefined ? p.pulserTrigAmt : 50;
+            document.getElementById('pulser-trig-amt-val').innerText = document.getElementById('pulser-trig-amt').value + '%';
+
+            document.getElementById('tape-drive').value = p.tapeDrive !== undefined ? p.tapeDrive : 0.0;
+            document.getElementById('tape-drive-val').innerText = document.getElementById('tape-drive').value + 'x';
+            document.getElementById('tape-warmth').value = p.tapeWarmth !== undefined ? p.tapeWarmth : 50;
+            document.getElementById('tape-warmth-val').innerText = document.getElementById('tape-warmth').value + '%';
+            updateTapeSaturation();
+
+            document.getElementById('delay-stereo-enabled').checked = p.stereoEnabled !== undefined ? p.stereoEnabled : true;
+            document.getElementById('delay-stereo-width').value = p.stereoWidth !== undefined ? p.stereoWidth : 70;
+            document.getElementById('delay-width-val').innerText = document.getElementById('delay-stereo-width').value + '%';
+            updateStereoWidth();
+
+            document.getElementById('reverb-type').value = p.reverbType || 'shimmer';
+            updateReverbBuffer();
+
+            document.getElementById('reverb-send').value = p.reverbSend || 0;
+            document.getElementById('reverb-val').innerText = (p.reverbSend || 0) + '%';
+            if (reverbSendGain) reverbSendGain.gain.value = (p.reverbSend || 0) / 100;
+
+            document.getElementById('delay-division').value = p.delayDiv || '0.75';
+            updateDelayTime();
+
+            document.getElementById('delay-feedback').value = p.delayFb !== undefined ? p.delayFb : 25;
+            document.getElementById('delay-fb-val').innerText = (document.getElementById('delay-feedback').value) + '%';
+            updateDelayFeedbackGain();
+
+            document.getElementById('delay-send').value = p.delaySend || 0;
+            document.getElementById('delay-send-val').innerText = (p.delaySend || 0) + '%';
+            if (delaySendGain) delaySendGain.gain.value = (p.delaySend || 0) / 100;
+
+            document.getElementById('bpm').value = p.bpm || 120;
+            document.getElementById('bpm-val').innerText = p.bpm || 120;
+
+            document.getElementById('seq-length').value = p.seqLength || 5;
+            updateSequencerLengthDisplay();
+
+            document.getElementById('mod-pitch-enabled').checked = p.modPitch || false;
+            document.getElementById('mod-pitch-depth').value = p.modPitchDepth || 0;
+
+            document.getElementById('mod-decay-enabled').checked = p.modDecay || false;
+            document.getElementById('mod-decay-depth').value = p.modDecayDepth || 0;
+
+            document.getElementById('mod-cutoff-enabled').checked = p.modCutoff || false;
+            document.getElementById('mod-cutoff-depth').value = p.modCutoffDepth || 0;
+
+            document.getElementById('mod-reverb-enabled').checked = p.modReverb || false;
+            document.getElementById('mod-reverb-depth').value = p.modReverbDepth || 0;
+
+            document.getElementById('mod-delay-enabled').checked = p.modDelay || false;
+            document.getElementById('mod-delay-depth').value = p.modDelayDepth || 0;
+
+            updateAllSlidersConfig();
+        }
+
+        document.getElementById('preset-select').addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val.startsWith('user_')) {
+                const key = val.replace('user_', '');
+                const custom = getPresetsFromStorage();
+                if (custom[key]) loadPresetData(custom[key]);
+            } else if (FACTORY_PRESETS[val]) {
+                loadPresetData(FACTORY_PRESETS[val]);
+            }
+        });
+
+        document.getElementById('save-preset-btn').addEventListener('click', () => {
+            const name = prompt("Inserisci il nome del nuovo Preset:", "My Synth Preset");
+            if (name && name.trim() !== "") {
+                const key = name.trim().toLowerCase().replace(/\s+/g, '_');
+                const presetData = getCurrentStateAsPreset(name.trim());
+                savePresetToStorage(key, presetData);
+                document.getElementById('preset-select').value = 'user_' + key;
+            }
+        });
+
+        document.getElementById('delete-preset-btn').addEventListener('click', () => {
+            const val = document.getElementById('preset-select').value;
+            if (!val.startsWith('user_')) {
+                alert("I preset di fabbrica non possono essere eliminati!");
+                return;
+            }
+            if (confirm("Sei sicuro di voler eliminare questo preset salvato?")) {
+                const key = val.replace('user_', '');
+                deletePresetFromStorage(key);
+                document.getElementById('preset-select').value = 'init';
+                loadPresetData(FACTORY_PRESETS['init']);
+            }
+        });
+
+        document.getElementById('rec-btn').addEventListener('click', toggleRecording);
+        document.getElementById('seq-length').addEventListener('change', updateSequencerLengthDisplay);
+
+        document.getElementById('strike-btn').addEventListener('click', () => {
+            playNote(stepsState[0].freq || 440, 0.3);
+        });
+
+        document.getElementById('pulser-strike-btn').addEventListener('click', () => {
+            triggerPulserShot();
+        });
+
+        document.getElementById('pulser-rate').addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            document.getElementById('pulser-rate-val').innerText = val + ' Hz';
+            if (pulserOsc && audioCtx) {
+                pulserOsc.frequency.setValueAtTime(val, audioCtx.currentTime);
+            }
+            startLedAnimation(val);
+        });
+
+        document.getElementById('pulser-cycle').addEventListener('change', (e) => {
+            if (pulserGain && audioCtx) {
+                const depth = parseFloat(document.getElementById('pulser-depth').value) * 20;
+                pulserGain.gain.setValueAtTime(e.target.checked ? depth : 0, audioCtx.currentTime);
+            }
+        });
+
+        document.getElementById('pulser-trig-amt').addEventListener('input', (e) => {
+            document.getElementById('pulser-trig-amt-val').innerText = e.target.value + '%';
+        });
+
+        document.getElementById('tape-drive').addEventListener('input', (e) => {
+            document.getElementById('tape-drive-val').innerText = e.target.value + 'x';
+            updateTapeSaturation();
+        });
+
+        document.getElementById('tape-warmth').addEventListener('input', (e) => {
+            document.getElementById('tape-warmth-val').innerText = e.target.value + '%';
+            updateTapeSaturation();
+        });
+
+        document.getElementById('delay-stereo-enabled').addEventListener('change', updateStereoWidth);
+        document.getElementById('delay-stereo-width').addEventListener('input', (e) => {
+            document.getElementById('delay-width-val').innerText = e.target.value + '%';
+            updateStereoWidth();
+        });
+
+        document.getElementById('delay-feedback').addEventListener('input', (e) => {
+            document.getElementById('delay-fb-val').innerText = e.target.value + '%';
+            updateDelayFeedbackGain();
+        });
+
+        document.getElementById('play-btn').addEventListener('click', (e) => {
+            initAudio();
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                e.target.innerText = 'PAUSE';
+                e.target.classList.add('playing');
+                currentStep = 0;
+                stepTick();
+            } else {
+                e.target.innerText = 'PLAY';
+                e.target.classList.remove('playing');
+                clearTimeout(timerId);
+                document.querySelectorAll('.step-btn').forEach(btn => btn.classList.remove('current'));
+            }
+        });
+
+        document.getElementById('env-attack').addEventListener('input', (e) => {
+            document.getElementById('env-attack-val').innerText = e.target.value + ' ms';
+        });
+
+        document.getElementById('env-decay').addEventListener('input', (e) => {
+            document.getElementById('env-decay-val').innerText = e.target.value + ' ms';
+        });
+
+        document.getElementById('env-sustain').addEventListener('input', (e) => {
+            document.getElementById('env-sustain-val').innerText = e.target.value + '%';
+        });
+
+        document.getElementById('env-release').addEventListener('input', (e) => {
+            document.getElementById('env-release-val').innerText = e.target.value + ' ms';
+        });
+
+        document.getElementById('lpg-cutoff').addEventListener('input', (e) => {
+            document.getElementById('lpg-cutoff-val').innerText = e.target.value + ' Hz';
+        });
+
+        document.getElementById('lpg-env-amount').addEventListener('input', (e) => {
+            document.getElementById('lpg-env-amount-val').innerText = e.target.value + ' Hz';
+        });
+
+        document.getElementById('reverb-type').addEventListener('change', updateReverbBuffer);
+        document.getElementById('delay-division').addEventListener('change', updateDelayTime);
+
+        document.getElementById('delay-send').addEventListener('input', (e) => {
+            const val = e.target.value;
+            document.getElementById('delay-send-val').innerText = val + '%';
+            if (delaySendGain) {
+                delaySendGain.gain.value = val / 100;
+            }
+        });
+
+        document.getElementById('fm-free-mode').addEventListener('change', (e) => {
+            const isFree = e.target.checked;
+            const label = document.getElementById('fm-param-label');
+            const valSpan = document.getElementById('fm-param-val');
+            const slider = document.getElementById('fm-ratio');
+
+            if (isFree) {
+                label.childNodes[0].nodeValue = "Freq. FM: ";
+                slider.min = "1";
+                slider.max = "3000";
+                slider.step = "5";
+                slider.value = "220";
+                valSpan.innerText = "220 Hz";
+            } else {
+                label.childNodes[0].nodeValue = "FM Ratio: ";
+                slider.min = "0.25";
+                slider.max = "8.0";
+                slider.step = "0.25";
+                slider.value = "1.0";
+                valSpan.innerText = "1.0x";
+            }
+        });
+
+        document.getElementById('fm-ratio').addEventListener('input', (e) => {
+            const isFree = document.getElementById('fm-free-mode').checked;
+            const valSpan = document.getElementById('fm-param-val');
+            valSpan.innerText = isFree ? `${e.target.value} Hz` : `${e.target.value}x`;
+        });
+
+        document.getElementById('wavefold-drive').addEventListener('input', (e) => {
+            document.getElementById('fold-val').innerText = `${e.target.value}x`;
+        });
+
+        document.getElementById('free-pitch').addEventListener('change', updateAllSlidersConfig);
+        document.getElementById('scale-select').addEventListener('change', () => {
+            if (!document.getElementById('free-pitch').checked) {
+                updateAllSlidersConfig();
+            }
+        });
+
+        document.getElementById('bpm').addEventListener('input', (e) => {
+            document.getElementById('bpm-val').innerText = e.target.value;
+            updateDelayTime();
+        });
+
+        document.getElementById('fm-depth').addEventListener('input', (e) => {
+            document.getElementById('fm-depth-val').innerText = e.target.value;
+        });
+
+        document.getElementById('reverb-send').addEventListener('input', (e) => {
+            const val = e.target.value;
+            document.getElementById('reverb-val').innerText = val + '%';
+            if (reverbSendGain) reverbSendGain.gain.value = val / 100;
+        });
+
+        buildSequencerDOM();
+        setupBuchlaTouchEvents();
+        refreshPresetSelect();
+        document.getElementById('preset-select').value = 'init';
+        loadPresetData(FACTORY_PRESETS['init']);
+    </script>
+</body>
+</html>
