@@ -6,7 +6,7 @@
   "orientation": "any",
   "scope": "/",
   "short_name": "breadboardmusic-ctrl.github",
-  "start_url": "/",
+  "start_url": "./",
   "theme_color": "#ffffff",
   "description": "little",
   "icons":[{"src": "./icon.png",
