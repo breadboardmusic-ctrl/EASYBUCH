@@ -8,5 +8,9 @@
   "short_name": "breadboardmusic-ctrl.github",
   "start_url": "/",
   "theme_color": "#ffffff",
+  "icons":[{"src": "./icon.png",
+    "sizes": "512x512",
+    "type": "image/png"
+   } 
   "description": "little"
 }
